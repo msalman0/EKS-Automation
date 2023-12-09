@@ -72,7 +72,7 @@ resource "aws_subnet" "private_1" {
   cidr_block = "192.168.11.0/24"
 
   # The AZ for the subnet.
-  availability_zone = "eu-west-1"
+  availability_zone = "eu-west-1a"
 
   # A map of tags to assign to the resource.
   tags = {

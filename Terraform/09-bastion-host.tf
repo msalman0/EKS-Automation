@@ -12,7 +12,7 @@ resource "local_file" "ec2-bastion-host-public-key" {
 }
 
 ## Create the sensitive file for Private Key
-resource "local_sensitive_file" "ec2-bastion-host-private-key" {
+resource "local_file" "ec2-bastion-host-private-key" {
   depends_on      = [tls_private_key.ec2-bastion-host-key-pair]
   content         = tls_private_key.ec2-bastion-host-key-pair.private_key_pem
   filename        = var.ec2-bastion-private-key-path
@@ -53,6 +53,7 @@ resource "aws_security_group" "ec2-bastion-sg" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "IPv4 route Open to Public Internet"
   }
+
 }
 
 ## EC2 Bastion Host Elastic IP
@@ -65,12 +66,12 @@ resource "aws_eip" "ec2-bastion-host-eip" {
 
 ## EC2 Bastion Host
 resource "aws_instance" "ec2-bastion-host" {
-  ami                         = "ami-0d76271a8a1525c1a"
+  ami                         = "ami-07355fe79b493752d"
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.ec2-bastion-host-key-pair.key_name
-  vpc_security_group_ids      = [aws_security_group.ec2-bastion-sg.id]
+  vpc_security_group_ids      = [aws_security_group.ec2-bastion-sg.id, aws_security_group.allow_tls.id, aws_security_group.allow_ssh.id]
   subnet_id                   = aws_subnet.public_1.id
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   user_data                   = file(var.bastion-bootstrap-script-path)
   root_block_device {
     volume_size           = 8
@@ -80,7 +81,20 @@ resource "aws_instance" "ec2-bastion-host" {
     tags = {
       Name = "${var.project}-ec2-bastion-host-root-volume-${var.environment}"
     }
+
   }
+
+  provisioner "file" {
+    source      = "../K8s"
+    destination = "/home/ec2-user/K8s"
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file(var.ec2-bastion-private-key-path)
+      host        = aws_instance.ec2-bastion-host.public_ip
+    }
+  }
+
   credit_specification {
     cpu_credits = "standard"
   }
@@ -98,4 +112,30 @@ resource "aws_instance" "ec2-bastion-host" {
 resource "aws_eip_association" "ec2-bastion-host-eip-association" {
   instance_id   = aws_instance.ec2-bastion-host.id
   allocation_id = aws_eip.ec2-bastion-host-eip.id
+}
+
+resource "aws_security_group" "bastion-sg" {
+  name   = "bastion-sg"
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_security_group_rule" "sg-rule-ssh" {
+  security_group_id = aws_security_group.bastion-sg.id
+  from_port         = 22
+  protocol          = "tcp"
+  to_port           = 22
+  type              = "ingress"
+  cidr_blocks       = var.company_vpn_ips
+  depends_on        = [aws_security_group.bastion-sg]
+}
+
+resource "aws_security_group_rule" "sg-rule-egress" {
+  security_group_id = aws_security_group.bastion-sg.id
+  type              = "egress"
+  from_port         = 0
+  protocol          = "all"
+  to_port           = 0
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  depends_on        = [aws_security_group.bastion-sg]
 }

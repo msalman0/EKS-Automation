@@ -1,0 +1,25 @@
+#Download the Helm binary for your platform from the Helm website. 
+#You can choose the version that is compatible with your Kubernetes cluster.
+curl -LO https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+
+#Extract the binary from the downloaded archive by running the following command:
+tar xfz helm-v3.11.0-linux-amd64.tar.gz
+
+#Move the binary to a directory in your system’s PATH. 
+#This will allow you to run Helm from any location on your system.
+sudo mv linux-amd64/helm /usr/local/bin/
+
+#Initialize Helm by running the following command:
+helm init
+
+#Verify that Helm is installed correctly by running the following command:
+helm version
+
+helm repo add my-repo https://charts.bitnami.com/bitnami
+
+helm install my-release my-repo/wordpress --set wordpressPassword=password
+
+export SERVICE_IP=$(kubectl get svc --namespace default wp-demo-wordpress --include "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+echo "WordPress URL: http://$SERVICE_IP/"
+echo "WordPress Admin URL: http://$SERVICE_IP/admin"
+

@@ -26,12 +26,12 @@ variable "availability_zones" {
 ## EC2 Bastion Host Variables
 variable "ec2-bastion-public-key-path" {
   description = "ec2-bastion-public-key-path"
-  default     = "../secrets/ec2-bastion-key-pair.pub"
+  default     = "./ec2-bastion-key-pair.pub"
 }
 
 variable "ec2-bastion-private-key-path" {
   description = "ec2-bastion-private-key-path"
-  default     = "../secrets/ec2-bastion-key-pair.pem"
+  default     = "./ec2-bastion-key-pair.pem"
 }
 
 variable "ec2-bastion-ingress-ip-1" {
@@ -42,4 +42,9 @@ variable "ec2-bastion-ingress-ip-1" {
 variable "bastion-bootstrap-script-path" {
   description = "bastion-bootstrap-script-path"
   default     = "../Scripts/bastion-bootstrap.sh"
+}
+
+variable "company_vpn_ips" {
+  description = "company_vpn_ips"
+  default     = ["0.0.0.0/0"]
 }
