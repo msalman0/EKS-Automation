@@ -42,17 +42,18 @@ Private Subnets would have CIDR blocks
 192.168.13.0/24
 
 As long as these subnets will host EKS , then you need to add special tags as per 
-[Amazon EKS VPC and subnet requirements and considerations]{https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html}
+[Amazon EKS VPC and subnet requirements and considerations](https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html)
 
-'''
+```
   # A map of tags to assign to the resource.
   tags = {
     Name                        = "public-eu-west-1a"
     "kubernetes.io/cluster/eks" = "shared"
     "kubernetes.io/role/elb"    = 1
   }
-  
-  '''
+
+```
+
 
 ## K8s
 
