@@ -67,6 +67,57 @@ Here, the routes table created in the previous step start to be associated with 
 - Public subnets will be associated to public route
 - Privatesubnets will ve associated to private route
 
+### Internet-gateways
+Provides a resource to create a VPC Internet Gateway. and link it to our VPC
+
+```
+
+resource "aws_internet_gateway" "main" {
+  # The VPC ID to create in.
+  vpc_id = aws_vpc.main.id
+
+  # A map of tags to assign to the resource.
+  tags = {
+    Name = "main"
+  }
+}
+
+```
+
+### Elastic IPs
+Provides an Elastic IP resource. 
+EIP may require IGW to exist prior to association.
+
+```
+resource "aws_eip" "nat1" {
+  # EIP may require IGW to exist prior to association. 
+  # Use depends_on to set an explicit dependency on the IGW.
+  depends_on = [aws_internet_gateway.main]
+}
+
+```
+Three different EIPs were created to serve three different nat-gateways
+
+### nat-gatways
+Provides a resource to create a VPC NAT Gateway.
+nat-gateways is located in the public subnet and it is used by private subnet to access the internet whenever needed
+
+```
+resource "aws_nat_gateway" "gw1" {
+  # The Allocation ID of the Elastic IP address for the gateway.
+  allocation_id = aws_eip.nat1.id
+
+  # The Subnet ID of the subnet in which to place the gateway.
+  subnet_id = aws_subnet.public_1.id
+
+  # A map of tags to assign to the resource.
+  tags = {
+    Name = "NAT 1"
+  }
+}
+
+```
+
 ### Bastion-host
 
 Bastion host is nothing but an EC2 instance located in public subnet of VPC via which we will be able to access EKS cluster and apply kubectl commands
@@ -147,59 +198,6 @@ Why do we need a bastion host ?
 
 -Third-Party Tools: Some third-party tools or integrations may require access to your EKS cluster from a public network. In such cases, a bastion host can act as an intermediary to facilitate the connection between the public network and your private EKS cluster.
 
-
-### Internet-gateways
-Provides a resource to create a VPC Internet Gateway. and link it to our VPC
-
-```
-
-resource "aws_internet_gateway" "main" {
-  # The VPC ID to create in.
-  vpc_id = aws_vpc.main.id
-
-  # A map of tags to assign to the resource.
-  tags = {
-    Name = "main"
-  }
-}
-
-```
-
-### Elastic IPs
-Provides an Elastic IP resource. 
-EIP may require IGW to exist prior to association.
-
-```
-resource "aws_eip" "nat1" {
-  # EIP may require IGW to exist prior to association. 
-  # Use depends_on to set an explicit dependency on the IGW.
-  depends_on = [aws_internet_gateway.main]
-}
-
-```
-Three different EIPs were created to serve three different nat-gateways
-
-### nat-gatways
-Provides a resource to create a VPC NAT Gateway.
-nat-gateways is located in the public subnet and it is used by private subnet to access the internet whenever needed
-
-```
-resource "aws_nat_gateway" "gw1" {
-  # The Allocation ID of the Elastic IP address for the gateway.
-  allocation_id = aws_eip.nat1.id
-
-  # The Subnet ID of the subnet in which to place the gateway.
-  subnet_id = aws_subnet.public_1.id
-
-  # A map of tags to assign to the resource.
-  tags = {
-    Name = "NAT 1"
-  }
-}
-
-```
-
-### Routing Table
 
 ## K8s
 
